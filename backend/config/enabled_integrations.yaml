@@ -1,0 +1,82 @@
+web_search:
+  enabled: true
+  default_provider: duckduckgo
+  providers:
+    duckduckgo:
+      enabled: true
+      package: "@pskill9/web-search"
+    multi_engine:
+      enabled: true
+      package: "@aas-ee/open-websearch"
+      args: ["npx", "-y", "@aas-ee/open-websearch"]
+    searxng:
+      enabled: false # Enable after verification
+      package: "@secretiveshell/mcp-searxng"
+      instance_url: "https://searx.be" # Public instance for testing
+
+browser:
+  enabled: true
+  default_provider: native
+  providers:
+    native:
+      enabled: true
+    puppeteer:
+      enabled: true
+    fetch:
+      enabled: true
+
+filesystem:
+  enabled: true
+  default_provider: native
+  providers:
+    native:
+      enabled: true
+
+execution:
+  enabled: true
+  default_provider: native
+  providers:
+    native:
+      enabled: true
+
+tool_management:
+  enabled: true
+  default_provider: native
+  providers:
+    native:
+      enabled: true
+
+utilities:
+  enabled: true
+  default_provider: native
+  providers:
+    native:
+      enabled: true
+
+database:
+  enabled: true
+  providers:
+    postgres:
+      enabled: false
+      url: "postgresql://user:password@localhost:5432/db" # Update with actual credentials
+    sqlite:
+      enabled: true
+
+command:
+  enabled: true
+  providers:
+    local_commands:
+      enabled: true
+    process_mgmt:
+      enabled: true
+    ssh:
+      enabled: true
+
+vcs:
+  enabled: true
+  providers:
+    git:
+      enabled: true
+    git_ingest:
+      enabled: true
+      args: ["uvx", "mcp-git-ingest"]

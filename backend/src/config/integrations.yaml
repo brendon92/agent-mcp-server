@@ -1,0 +1,60 @@
+# Integration Configuration
+
+web_search:
+  enabled: true
+  providers:
+    duckduckgo:
+      enabled: true
+      # No specific config needed for basic usage, but can add args here
+    multi_engine:
+      enabled: false
+    searxng:
+      enabled: false
+      instance_url: null
+
+browser:
+  enabled: true
+  providers:
+    puppeteer:
+      enabled: true
+      # node_path: /usr/bin/node
+    fetch:
+      enabled: true
+    playwright:
+      enabled: false
+
+filesystem:
+  enabled: true
+  providers:
+    official:
+      enabled: true
+    markitdown:
+      enabled: true
+
+command:
+  enabled: true
+  providers:
+    local_commands:
+      enabled: true
+    process_mgmt:
+      enabled: true
+
+database:
+  enabled: true
+  providers:
+    postgres:
+      enabled: false
+    sqlite:
+      enabled: false
+
+vcs:
+  enabled: true
+  providers:
+    git:
+      enabled: true
+
+developer:
+  enabled: true
+  providers:
+    code_runner:
+      enabled: false
