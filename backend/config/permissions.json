@@ -1,0 +1,5 @@
+{
+    "allow_create_files": true,
+    "allow_delete_files": false,
+    "allow_execute_code": false
+}

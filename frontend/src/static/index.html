@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>MCP Server Dashboard</h1>
+                <div class="server-status" id="serverStatus">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Checking...</span>
+                </div>
+            </div>
+            <div class="header-right server-controls">
+                <button class="btn btn-success" id="btnStart">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <polygon points="3,2 13,8 3,14" />
+                    </svg>
+                    Start
+                </button>
+                <button class="btn btn-danger" id="btnStop">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <rect x="3" y="3" width="10" height="10" rx="1" />
+                    </svg>
+                    Stop
+                </button>
+                <button class="btn btn-warning" id="btnRestart">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+                        <path
+                            d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+                    </svg>
+                    Restart
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-container">
+            <!-- Sidebar - Tool Explorer -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Tool Explorer</h2>
+                    <input type="text" id="toolSearch" placeholder="Search tools..." class="search-input">
+                </div>
+                <div class="tool-categories" id="toolCategories">
+                    <!-- Tools will be populated here -->
+                </div>
+            </aside>
+
+            <!-- Main Area -->
+            <main class="main-content">
+                <!-- Tool Inspector -->
+                <section class="tool-inspector" id="toolInspector">
+                    <h2>Tool Inspector</h2>
+                    <div class="inspector-placeholder">
+                        Select a tool from the sidebar to view details
+                    </div>
+                    <div class="inspector-content" style="display: none;">
+                        <div class="inspector-field">
+                            <label>Name:</label>
+                            <span id="inspectorName"></span>
+                        </div>
+                        <div class="inspector-field">
+                            <label>Category:</label>
+                            <span id="inspectorCategory"></span>
+                        </div>
+                        <div class="inspector-field">
+                            <label>Type:</label>
+                            <span id="inspectorType"></span>
+                        </div>
+                        <div class="inspector-field">
+                            <label>Description:</label>
+                            <p id="inspectorDescription"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Playground -->
+                <section class="playground">
+                    <h2>Playground</h2>
+                    <form id="playgroundForm">
+                        <div class="form-group">
+                            <label for="exampleSelect">Selected Tool & Examples:</label>
+                            <div class="playground-controls">
+                                <select id="exampleSelect" class="example-select" disabled>
+                                    <option value="">Select a tool first...</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-icon">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path
+                                            d="M3 2a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1zm0 4a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1zm0 4a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1z" />
+                                        <polygon points="11,2 15,8 11,14" />
+                                    </svg>
+                                    Execute
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-icon" id="btnReset">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+                                        <path
+                                            d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+                                    </svg>
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="toolArgs">Arguments (JSON):</label>
+                            <textarea id="toolArgs" rows="6"
+                                placeholder='{"arg1": "value1", "arg2": "value2"}'>{}</textarea>
+                        </div>
+                    </form>
+                    <div class="execution-result" id="executionResult" style="display: none;">
+                        <h3>Result</h3>
+                        <pre id="resultContent"></pre>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- Bottom Panel -->
+        <div class="bottom-panel">
+            <div class="panel-tabs">
+                <button class="tab-btn active" data-tab="taskManager">Task Manager</button>
+                <button class="tab-btn" data-tab="consoleLog">Console Log</button>
+            </div>
+
+            <!-- Task Manager -->
+            <div class="tab-content active" id="taskManager">
+                <div class="task-controls">
+                    <button class="btn btn-sm btn-danger" id="btnKillSelected" disabled>Kill Selected</button>
+                    <button class="btn btn-sm btn-danger" id="btnKillAll">Kill All Tasks</button>
+                </div>
+                <div class="task-list" id="taskList">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="40"></th>
+                                <th>Status</th>
+                                <th>Task ID</th>
+                                <th>Tool Name</th>
+                                <th>Duration</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody">
+                            <tr class="empty-state">
+                                <td colspan="6">No tasks yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Console Log -->
+            <div class="tab-content" id="consoleLog">
+                <div class="console-controls">
+                    <button class="btn btn-sm" id="btnClearLog">Clear</button>
+                    <input type="text" id="logSearch" placeholder="Search..." class="search-input">
+                    <select id="logFilterType" class="filter-select">
+                        <option value="">All Events</option>
+                        <option value="task_started">Started</option>
+                        <option value="task_completed">Completed</option>
+                        <option value="task_failed">Failed</option>
+                    </select>
+                    <select id="logFilterTool" class="filter-select">
+                        <option value="">All Tools</option>
+                    </select>
+                    <div class="column-toggles">
+                        <label><input type="checkbox" class="col-toggle" data-col="timestamp" checked> Time</label>
+                        <label><input type="checkbox" class="col-toggle" data-col="tool" checked> Tool</label>
+                        <label><input type="checkbox" class="col-toggle" data-col="taskId" checked> Task ID</label>
+                        <label><input type="checkbox" class="col-toggle" data-col="args" checked> Args</label>
+                        <label><input type="checkbox" class="col-toggle" data-col="result" checked> Result</label>
+                        <label><input type="checkbox" class="col-toggle" data-col="status" checked> Status</label>
+                    </div>
+                </div>
+                <div class="console-output" id="consoleOutput">
+                    <div class="console-placeholder">Waiting for events...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+
+</html>

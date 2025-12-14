@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: mcp-server-backend
+    container_name: mcp-backend
+    volumes:
+      - ./backend:/app/backend
+      - ./test_workspace:/app/test_workspace
+    environment:
+      - MCP_AUTH_TOKEN=15ed8c4d77f2cb779c030f2146bf5bbc
+      - PYTHONPATH=/app
+    stdin_open: true # Keep stdin open for MCP stdio communication if needed
+    tty: true
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: mcp-server-frontend
+    container_name: mcp-frontend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      - ./test_workspace:/app/test_workspace
+    environment:
+      - PYTHONPATH=/app
+      - MCP_AUTH_TOKEN=15ed8c4d77f2cb779c030f2146bf5bbc
+    depends_on:
+      - backend
