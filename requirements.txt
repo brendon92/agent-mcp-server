@@ -11,3 +11,4 @@ pytest
 pytest-asyncio
 paramiko
 aiohttp
+pydantic-settings

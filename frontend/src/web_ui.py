@@ -192,14 +192,13 @@ def sync_server_state():
 def log_reader(pipe, pipe_name):
     """Read lines from a pipe and emit them as events"""
     try:
-        with pipe:
-            for line in iter(pipe.readline, ''):
-                # We need to use a loop to run the async emit_event in the main event loop
-                # This is a bit tricky from a thread. 
-                # For now, let's just print to stdout which will be captured by the system logs
-                # and maybe add a proper async bridge later if we want real-time logs in UI from this.
-                # Just reading the line prevents the buffer from filling up.
-                print(f"[MCP Server {pipe_name}] {line.strip()}")
+        for line in iter(pipe.readline, ''):
+            # We need to use a loop to run the async emit_event in the main event loop
+            # This is a bit tricky from a thread. 
+            # For now, let's just print to stdout which will be captured by the system logs
+            # and maybe add a proper async bridge later if we want real-time logs in UI from this.
+            # Just reading the line prevents the buffer from filling up.
+            print(f"[MCP Server {pipe_name}] {line.strip()}")
     except Exception as e:
         print(f"Log reader error for {pipe_name}: {e}")
 

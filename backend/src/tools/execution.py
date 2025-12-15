@@ -1,38 +1,40 @@
-import subprocess
-import sys
 from ..workspace import Workspace
+from ..config.settings import ServerConfig
+from ..execution.docker import DockerExecutor
+from ..execution.local import LocalExecutor
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ExecutionTools:
-    def __init__(self, workspace: Workspace):
+    def __init__(self, workspace: Workspace, config: ServerConfig):
         self.workspace = workspace
+        self.config = config
+        self.executor = self._initialize_executor()
+
+    def _initialize_executor(self):
+        if self.config.sandbox_enabled:
+            try:
+                # Try Docker
+                logger.info("Initializing DockerExecutor...")
+                return DockerExecutor()
+            except Exception as e:
+                logger.warning(f"Failed to initialize DockerExecutor: {e}. Falling back to LocalExecutor.")
+                return LocalExecutor()
+        else:
+            logger.info("Sandbox disabled. Using LocalExecutor.")
+            return LocalExecutor()
 
     def execute_python_code(self, code: str) -> str:
         """
-        Executes Python code in a sandboxed environment.
-        WARNING: This implementation uses a subprocess for MVP.
-        For production, use Docker or a proper sandbox.
+        Executes Python code using the configured executor.
         """
-        if not self.workspace.config.get("allow_execute_code", False):
-            raise PermissionError("Code execution is disabled in this workspace.")
-
-        # MVP: Run in a separate process
-        # We pass the code via stdin
-        try:
-            result = subprocess.run(
-                [sys.executable, "-c", code],
-                capture_output=True,
-                text=True,
-                timeout=10, # 10 second timeout
-                cwd=str(self.workspace.files_path) # Run in workspace files dir
-            )
-            
-            output = result.stdout
-            if result.stderr:
-                output += f"\nSTDERR:\n{result.stderr}"
-                
-            return output
-            
-        except subprocess.TimeoutExpired:
-            return "Error: Execution timed out."
-        except Exception as e:
-            return f"Error executing code: {str(e)}"
+        # Security check (double check configuration)
+        # Note: Pydantic settings are robust, but verification doesn't hurt.
+        
+        timeout = self.config.max_tool_execution_time
+        
+        # We can inject workspace path as env var if needed
+        env = {"WORKSPACE_DIR": str(self.workspace.files_path)}
+        
+        return self.executor.execute(code, timeout=timeout, env=env)

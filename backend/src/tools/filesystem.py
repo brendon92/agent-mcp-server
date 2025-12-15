@@ -1,8 +1,9 @@
 from ..workspace import Workspace
 
 class FilesystemTools:
-    def __init__(self, workspace: Workspace):
+    def __init__(self, workspace: Workspace, on_change=None):
         self.workspace = workspace
+        self.on_change = on_change
 
     def read_file(self, path: str) -> str:
         """Reads a file from the workspace."""
@@ -26,6 +27,13 @@ class FilesystemTools:
         with open(full_path, "w") as f:
             f.write(content)
             
+        # Notify
+        if self.on_change:
+            try:
+                self.on_change(path)
+            except Exception:
+                pass # logging handled by caller
+            
         return f"Successfully wrote to {path}"
 
     def delete_file(self, path: str) -> str:
@@ -39,6 +47,14 @@ class FilesystemTools:
             raise FileNotFoundError(f"File not found: {path}")
             
         full_path.unlink()
+        
+        # Notify
+        if self.on_change:
+            try:
+                self.on_change(path)
+            except Exception:
+                pass
+                
         return f"Successfully deleted {path}"
 
     def list_files(self, path: str = ".") -> str:

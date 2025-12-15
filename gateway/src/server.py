@@ -1,8 +1,31 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+import logging
+import os
 import httpx
 import uvicorn
+
+# Configure Logging
+# Calculate project root from this file: gateway/src/server.py -> gateway/src -> gateway -> ROOT
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_project_root = os.path.dirname(os.path.dirname(_current_dir))
+LOG_DIR = os.path.join(_project_root, "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, "gateway.log")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler() # Gateway usually runs in foreground or container, safe to log to stdout too
+    ]
+)
+logger = logging.getLogger("mcp_gateway")
+logger.info("----------------------------------------------------------------")
+logger.info(f"MCP Gateway Starting. Log file: {LOG_FILE}")
+
 
 app = FastAPI(title="MCP Gateway")
 

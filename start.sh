@@ -10,7 +10,8 @@ sleep 2
 
 # Start Web UI using its startup script
 echo "Starting Web UI..."
-./frontend/start.sh > web_ui.log 2>&1 &
+mkdir -p logs
+./frontend/start.sh > logs/web_ui.log 2>&1 &
 WEB_UI_PID=$!
 
 # Wait for Web UI to be ready

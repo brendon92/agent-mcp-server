@@ -9,10 +9,15 @@ services:
       - ./backend:/app/backend
       - ./test_workspace:/app/test_workspace
     environment:
-      - MCP_AUTH_TOKEN=15ed8c4d77f2cb779c030f2146bf5bbc
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:?error_auth_token_missing}
       - PYTHONPATH=/app
     stdin_open: true # Keep stdin open for MCP stdio communication if needed
     tty: true
+    healthcheck:
+      test: [ "CMD-SHELL", "grep -q 'MCP Backend Server Starting' /app/logs/backend_server.log || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
@@ -28,6 +33,7 @@ services:
       - ./test_workspace:/app/test_workspace
     environment:
       - PYTHONPATH=/app
-      - MCP_AUTH_TOKEN=15ed8c4d77f2cb779c030f2146bf5bbc
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:?error_auth_token_missing}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy

@@ -14,40 +14,64 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from backend.src.workspace import Workspace
 from backend.src.registry import ToolRegistry
 from backend.src.config.settings import ServerConfig
+from backend.src.security import validate_token, AuthenticationError
 from backend.src.tools.filesystem import FilesystemTools
 from backend.src.tools.execution import ExecutionTools
 from backend.src.tools.meta import MetaTools
 from backend.src.tools.time import TimeTools
 from backend.src.tools.browser import BrowserTools
+from backend.src.tools.interaction import InteractionTools
+from backend.src.middleware import logged, rate_limited
 
 # Load Configuration
 # Build absolute path relative to this module's location
 _module_dir = os.path.dirname(os.path.abspath(__file__))
 _backend_dir = os.path.dirname(_module_dir)
 _config_path = os.path.join(_backend_dir, "config", "workspace_config.yaml")
-config = ServerConfig.from_yaml(_config_path)
+
+try:
+    config = ServerConfig.from_yaml(_config_path)
+    # Validate token immediately on startup
+    validate_token()
+except Exception as e:
+    print(f"Startup Error: {e}", file=sys.stderr)
+    sys.exit(1)
 
 # PID file for server detection (shared with frontend web_ui.py)
 _project_root = os.path.dirname(_backend_dir)
 PID_FILE = os.path.join(_project_root, ".mcp_server.pid")
 
 # Configure Logging
-LOG_FILE = os.path.join(_project_root, "backend_server.log")
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log_obj = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "module": record.module,
+            "func": record.funcName,
+            "line": record.lineno
+        }
+        if hasattr(record, "trace_id"):
+            log_obj["trace_id"] = record.trace_id
+        return json.dumps(log_obj)
+
+# Configure Logging
+# Configure Logging
+LOG_DIR = os.path.join(_project_root, "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, "backend_server.log")
+handler = logging.FileHandler(LOG_FILE)
+handler.setFormatter(JsonFormatter())
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        # Note: We do NOT add StreamHandler here because mcp uses stdio for communication
-        # and writing random logs to stdout/stderr might corrupt the JSON-RPC stream
-        # if the client isn't handling stderr correctly.
-        # But usually stderr is safe. Start with just file for safety.
-    ]
+    handlers=[handler]
 )
 logger = logging.getLogger("mcp_server")
-logger.info("----------------------------------------------------------------")
-logger.info(f"MCP Backend Server Starting. Log file: {LOG_FILE}")
-logger.info(f"Project Root: {_project_root}")
+logger.info(json.dumps({"event": "startup", "message": "MCP Backend Server Starting", "log_file": LOG_FILE}))
+logger.info(json.dumps({"event": "config", "project_root": _project_root}))
 
 
 def write_pid_file():
@@ -96,19 +120,26 @@ def check_single_instance():
 # Register cleanup handler
 atexit.register(cleanup_pid_file)
 
-# Initialize Workspace
-workspace = Workspace(config.workspace_dir)
+# Initialize MCP Server
+mcp = FastMCP("My Custom MCP Server")
+
+# Notification Callback (Placeholder until strict FastMCP API confirmed)
+def on_file_changed(path: str):
+    logger.info(f"FileSystem Notification: File changed: {path}")
+    # TODO: Use mcp.server.send_resource_updated if available in future
+    # or expose via context.
 
 # Initialize Registry and Tools
+workspace = Workspace(config.workspace_dir)
 registry = ToolRegistry(workspace, config)
-fs_tools = FilesystemTools(workspace)
-exec_tools = ExecutionTools(workspace)
+
+fs_tools = FilesystemTools(workspace, on_change=on_file_changed)
+exec_tools = ExecutionTools(workspace, config)
 meta_tools = MetaTools(registry)
 time_tools = TimeTools()
 browser_tools = BrowserTools(workspace)
+interaction_tools = InteractionTools()
 
-# Initialize MCP Server
-mcp = FastMCP("My Custom MCP Server")
 
 # --- Register System Tools with Categories ---
 registry.register_system_tool("read_file", fs_tools.read_file, "File Operations")
@@ -129,16 +160,22 @@ registry.register_system_tool("click", browser_tools.click, "Browser Automation"
 registry.register_system_tool("type", browser_tools.type, "Browser Automation")
 registry.register_system_tool("screenshot", browser_tools.screenshot, "Browser Automation")
 
+registry.register_system_tool("ask_human", interaction_tools.ask_human, "Interaction")
+
 
 # --- Expose Tools via FastMCP ---
 
 # Filesystem
 @mcp.tool()
+@logged
+@rate_limited
 def read_file(path: str) -> str:
     """Reads a file from the workspace."""
     return fs_tools.read_file(path)
 
 @mcp.tool()
+@logged
+@rate_limited
 def write_file(path: str, content: str) -> str:
     """Writes content to a file in the workspace."""
     return fs_tools.write_file(path, content)
@@ -155,6 +192,8 @@ def list_files(path: str = ".") -> str:
 
 # Execution
 @mcp.tool()
+@logged
+@rate_limited
 def execute_python_code(code: str) -> str:
     """Executes Python code in a sandboxed environment."""
     return exec_tools.execute_python_code(code)
@@ -178,6 +217,8 @@ def get_current_time(format: str = "long", timezone: str = "UTC") -> str:
 
 # Browser
 @mcp.tool()
+@logged
+@rate_limited
 async def open_page(url: str) -> str:
     """Opens a URL in the browser."""
     return await browser_tools.open_page(url)
@@ -202,11 +243,21 @@ async def take_screenshot(filename: str) -> str:
     """Takes a screenshot and saves it to the workspace."""
     return await browser_tools.screenshot(filename)
 
+# Interaction
+@mcp.tool()
+async def ask_human(question: str, ctx: Context = None) -> str:
+    """
+    Asks the human user a question and waits for a response.
+    """
+    return await interaction_tools.ask_human(question, ctx=ctx)
+
 
 # --- Dynamic Tool Loading ---
 registry.load_dynamic_tools()
 
 @mcp.tool()
+@logged
+@rate_limited
 def call_dynamic_tool(name: str, args: str = "{}") -> str:
     """Calls a dynamically created tool."""
     try:
