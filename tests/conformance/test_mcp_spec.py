@@ -50,8 +50,15 @@ def test_server_startup_and_handshake(mcp_server_process):
     mcp_server_process.stdin.write(json.dumps(request) + "\n")
     mcp_server_process.stdin.flush()
     
-    # Read response
-    response_line = mcp_server_process.stdout.readline()
+    # Read response with retry loop
+    import time
+    response_line = ""
+    for _ in range(5):
+        line = mcp_server_process.stdout.readline()
+        if line and line.strip():
+            response_line = line
+            break
+        time.sleep(0.5)
     
     # If the server is using FastMCP properly over stdio, it should return a JSON-RPC response.
     # However, depending on FastMCP version/init time, it might output logs first.

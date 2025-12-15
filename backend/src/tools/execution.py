@@ -10,7 +10,7 @@ class ExecutionTools:
     def __init__(self, workspace: Workspace, config: ServerConfig):
         self.workspace = workspace
         self.config = config
-        self.executor = self._initialize_executor()
+        self.executor: ToolExecutor = self._initialize_executor()
 
     def _initialize_executor(self):
         if self.config.sandbox_enabled:

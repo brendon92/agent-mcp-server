@@ -42,8 +42,9 @@ class InteractionTools:
             # Fallback for now until exact method is confirmed by 'mcp' lib docs inspection (which I can't do deeper than listing)
             # But the plan requires it.
             
-            # Let's assume a simplified interaction for now:
-            return f"[Mock] generic_ask_human: {question}"
+            # Fallback if sampling not found/supported
+            msg = f"Error: The connected MCP client does not support 'sampling' (needed for ask_human). Question was: {question}"
+            return msg
             
         except Exception as e:
             return f"Error asking human: {e}"

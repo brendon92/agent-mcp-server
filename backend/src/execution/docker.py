@@ -54,19 +54,23 @@ class DockerExecutor(ToolExecutor):
             
             container.put_archive('/app', tar_stream)
             
-            # 3. Execute script
-            exit_code, output = container.exec_run(
-                cmd=f"python3 /app/script.py",
-                workdir="/app",
-                environment=env,
-            )
+            # 3. Execute script with timeout
+            import concurrent.futures
             
-            # 4. Handle timeout manually? 
-            # exec_run doesn't natively support timeout in the same way subprocess does easily?
-            # Actually strictly speaking we should use run() with cleanup but that has cold start overhead.
-            # For now relying on the ephemeral nature.
+            def run_container_cmd():
+                return container.exec_run(
+                    cmd=f"python3 /app/script.py",
+                    workdir="/app",
+                    environment=env,
+                )
             
-            return output.decode('utf-8')
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(run_container_cmd)
+                try:
+                    exit_code, output = future.result(timeout=timeout)
+                    return output.decode('utf-8')
+                except concurrent.futures.TimeoutError:
+                    return f"Error: Execution timed out after {timeout} seconds."
 
         except Exception as e:
             return f"Docker Execution Error: {str(e)}"

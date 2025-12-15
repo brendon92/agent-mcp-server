@@ -69,7 +69,7 @@ def sanitize_path(path: str, base_dir: str) -> str:
     abs_base = os.path.abspath(base_dir)
     abs_path = os.path.abspath(os.path.join(abs_base, path))
     
-    if not abs_path.startswith(abs_base):
+    if not (abs_path == abs_base or abs_path.startswith(os.path.join(abs_base, ""))):
         raise InputValidationError(f"Access denied: Path '{path}' attempts to traverse outside workspace.")
         
     return abs_path
