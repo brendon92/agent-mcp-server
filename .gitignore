@@ -9,10 +9,9 @@ env/
 .venv/
 ENV/
 research/
-AGENTIC_WORKFLOW_RULES.md
-IMPLEMENTATION_PLAN.md
-TASKS.md
-DESIGN.md
+*.pid
+*.log
+*.md
 
 # Testing
 .pytest_cache/
@@ -38,8 +37,6 @@ build/
 Thumbs.db
 
 # Project specific
-.mcp_server.pid
-*.log
 test_workspace/
 
 # Environment

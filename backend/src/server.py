@@ -6,7 +6,7 @@ import logging
 import atexit
 from typing import Any, Dict
 import psutil
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Context
 
 # Add backend to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
