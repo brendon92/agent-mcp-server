@@ -104,9 +104,12 @@ def check_single_instance():
                     cmdline = ' '.join(proc.cmdline())
                     # Check if it's actually our server
                     if 'server.py' in cmdline:
-                        print(f"Error: MCP Server is already running (PID: {pid})", file=sys.stderr)
-                        print(f"Kill it with: kill {pid}", file=sys.stderr)
-                        sys.exit(1)
+                        if pid == os.getpid():
+                            pass # It is us
+                        else:
+                            print(f"Error: MCP Server is already running (PID: {pid})", file=sys.stderr)
+                            print(f"Kill it with: kill {pid}", file=sys.stderr)
+                            sys.exit(1)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     # Process died or we can't access it, assume stale lock
                     pass

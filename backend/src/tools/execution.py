@@ -2,6 +2,7 @@ from ..workspace import Workspace
 from ..config.settings import ServerConfig
 from ..execution.docker import DockerExecutor
 from ..execution.local import LocalExecutor
+from ..execution.base import ToolExecutor
 import logging
 
 logger = logging.getLogger(__name__)
