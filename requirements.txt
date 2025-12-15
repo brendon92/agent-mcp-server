@@ -4,7 +4,7 @@ uvicorn[standard]
 python-dateutil
 docker
 playwright
-duckduckgo-search>=4.0.0
+ddgs>=4.0.0
 PyYAML
 psutil
 pytest

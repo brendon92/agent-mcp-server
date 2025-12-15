@@ -21,7 +21,7 @@ The system is designed as a split-process architecture:
 1.  **Clone the repository**:
     ```bash
     git clone <repository-url>
-    cd mcp-server
+    cd agent-mcp-server
     ```
 
 2.  **Start with Docker Compose**:
@@ -83,36 +83,10 @@ mcp-server/
 ├── README.md           # This file
 └── RESOURCES.md        # Useful links and documentation resources
 ```
-
-## Agentic Workflow
-
--   **`TASKS.md`**: Check this file in `backend/` or `frontend/` for pending tasks.
--   **`CHANGELOG.md`**: Update this file in `backend/` or `frontend/` when making significant changes.
--   **`implementation_plan.md`**: Always create a plan before starting complex tasks.
-
 ## Documentation
 
 - **[Frontend Documentation](frontend/README.md)**
 - **[Backend Documentation](backend/README.md)**
 - **[Resources](RESOURCES.md)**
 
----
-## LLM Agent Guidelines
-
-> [!IMPORTANT]
-> **To all future Agents working on this codebase:**
-
-1.  **Keep it Clean**:
-    - Do not create files in the root directory unless absolutely necessary.
-    - Place code in `backend/` or `frontend/` appropriately.
-    - Remove unused files and directories immediately.
-
-2.  **Markdown Format**:
-    - Maintain all documentation in **Markdown** format.
-    - Use clear headers, bullet points, and code blocks.
-    - Ensure `README.md` files are kept up-to-date with code changes.
-    - Use "Codebase Context for LLMs" sections in sub-project READMEs to help future agents understand the context.
-
-## END OF GUIDELINES
----
 

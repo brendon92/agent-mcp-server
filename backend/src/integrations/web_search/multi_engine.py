@@ -13,7 +13,7 @@ class MultiEngineIntegration(MCPIntegration):
         cmd = self.config.get("args")
         if not cmd:
             # Fallback default
-            cmd = ["npx", "-y", "@aas-ee/open-websearch"]
+            cmd = ["npx", "-y", "open-websearch"]
             
         self.manager = SubprocessManager(cmd)
         try:

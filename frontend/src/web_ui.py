@@ -9,6 +9,7 @@ from typing import Dict, Any, List, Optional
 import psutil
 import secrets
 import json
+import threading
 from enum import Enum
 from pydantic import BaseModel
 from fastapi import FastAPI, WebSocket, HTTPException, Depends, status
@@ -187,6 +188,21 @@ def sync_server_state():
     mcp_server_state = ServerState.STOPPED
     external_server_pid = None
     return False
+
+def log_reader(pipe, pipe_name):
+    """Read lines from a pipe and emit them as events"""
+    try:
+        with pipe:
+            for line in iter(pipe.readline, ''):
+                # We need to use a loop to run the async emit_event in the main event loop
+                # This is a bit tricky from a thread. 
+                # For now, let's just print to stdout which will be captured by the system logs
+                # and maybe add a proper async bridge later if we want real-time logs in UI from this.
+                # Just reading the line prevents the buffer from filling up.
+                print(f"[MCP Server {pipe_name}] {line.strip()}")
+    except Exception as e:
+        print(f"Log reader error for {pipe_name}: {e}")
+
 
 # Request/Response Models
 class ToolExecuteRequest(BaseModel):
@@ -427,8 +443,14 @@ async def start_server():
             ["/bin/bash", start_script],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            text=True,
+            bufsize=1
         )
+        
+        # Start threads to consume output and prevent deadlock
+        threading.Thread(target=log_reader, args=(mcp_server_process.stdout, "stdout"), daemon=True).start()
+        threading.Thread(target=log_reader, args=(mcp_server_process.stderr, "stderr"), daemon=True).start()
         
         # Wait a bit to check if it started successfully
         await asyncio.sleep(2)

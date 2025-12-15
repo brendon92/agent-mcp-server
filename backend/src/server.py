@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 import json
+import logging
 import atexit
 from typing import Any, Dict
 import psutil
@@ -29,6 +30,25 @@ config = ServerConfig.from_yaml(_config_path)
 # PID file for server detection (shared with frontend web_ui.py)
 _project_root = os.path.dirname(_backend_dir)
 PID_FILE = os.path.join(_project_root, ".mcp_server.pid")
+
+# Configure Logging
+LOG_FILE = os.path.join(_project_root, "backend_server.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        # Note: We do NOT add StreamHandler here because mcp uses stdio for communication
+        # and writing random logs to stdout/stderr might corrupt the JSON-RPC stream
+        # if the client isn't handling stderr correctly.
+        # But usually stderr is safe. Start with just file for safety.
+    ]
+)
+logger = logging.getLogger("mcp_server")
+logger.info("----------------------------------------------------------------")
+logger.info(f"MCP Backend Server Starting. Log file: {LOG_FILE}")
+logger.info(f"Project Root: {_project_root}")
+
 
 def write_pid_file():
     """Write current process PID to file for detection by web UI"""

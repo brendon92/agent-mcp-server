@@ -8,6 +8,7 @@ venv/
 env/
 .venv/
 ENV/
+research/
 
 # Testing
 .pytest_cache/
